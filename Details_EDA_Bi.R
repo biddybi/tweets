@@ -148,11 +148,11 @@ count <- reverse %>%
 #dat<-read.csv("https://raw.githubusercontent.com/lopezbec/COVID19_Tweets_Dataset_2020/master/Summary_Details/2020_06/2020_06_02_13_Summary_Details.csv")
 #write.csv(dat, "2020_06_02_13_Summary_Details.csv")
 # new york time covid cases data
-ny <-read.csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
-covid<-read.csv("C:/Users/bix/Downloads/co.csv")
-covid <- covid %>%
-  count %>%
-  mutate(tweets = ifelse(covid$county == count$county, 1, 0)) %>%
+#ny <-read.csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
+covid<-read.csv("https://raw.githubusercontent.com/biddybi/tweets/main/co.csv")
+#covid <- covid %>%
+  #count %>%
+  #mutate(tweets = ifelse(covid$county == count$county, 1, 0)) %>%
 ##############################
 
 
