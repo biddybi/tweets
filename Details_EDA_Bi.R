@@ -104,153 +104,19 @@ for ( d in folder){
   setwd("..")
 }
 
-setwd("C:/Users/bix/Downloads")
 
 
-#Show FILES
-##########################################################################################################
-colnames(SUMMARY_moth)<-c('Month', 	'Avg #OR',	'Avg #RT',	'Avg Tweets','# OR',	'# RT',	'#Total',	'Total Geo',	
-                          'Max Rt',	'MD RT',	'Max Like',	'MD Like')
-write.csv(SUMMARY_moth, "SUMMARY_moth.csv")
-colnames(SUMMARY_day_main)<-c('Month',	'Date',	'#OR',	'#RT',	'#Total'	,'#Geo',	'MaxRt',	'MDRT',	'MaxLike',	'MDLike')
-write.csv(SUMMARY_day_main, "SUMMARY_day_main.csv")
-
-write.csv(Lang_tb, "Lang_Freq_table.csv")
 
 
 
 ####ANALYSIS, EDA, PLOTS
 ##########################################################################################################
-#CREATE DATE OBJECT
-SUMMARY_day_main$Hour<-rep(0,nrow(SUMMARY_day_main) )
-for( i in 1:nrow(SUMMARY_day_main)){
-  
-  SUMMARY_day_main[i, "Hour"]<-strsplit(SUMMARY_day_main[i,'Date'], split="_")[[1]][4]
-  
-  
-}
-
-SUMMARY_day_main$Date<-as.Date(SUMMARY_day_main$Date, '%Y_%m_%d_%H')
-SUMMARY_day_main$Month<-months(as.Date(SUMMARY_day_main$Date, '%Y_%m_%d_%H'),abbreviate =T)
-
-
-#RECODE LANGUAGE
-Lang_tb$LanguageLong <- langs$english[match(Lang_tb$V2, langs$alpha)]
-Lang_tb$LanguageLong[Lang_tb$V2=="in"] <- "Bahasa"
-Lang_tb$Hour<-rep(0,nrow(Lang_tb) )
-
-for( i in 1:nrow(Lang_tb)){
-  
-  Lang_tb[i, "Hour"]<-strsplit(Lang_tb[i,'V1'], split="_")[[1]][4]
-  
-  
-}
-Lang_tb$Date<-as.Date(Lang_tb$V1, '%Y_%m_%d_%H')
-Lang_tb$Month<-months(as.Date(Lang_tb$V1, '%Y_%m_%d_%H'),abbreviate =T)
 
 
 
 
 
-#SUMMARIZE TWEETS BY Lang
-languages<-Lang_tb %>%
-  group_by(Date,LanguageLong) %>%
-  summarize(total=sum(V3,na.rm = TRUE))
 
-topLang_or<-Lang_tb %>%
-  group_by(LanguageLong) %>%
-  summarize(total=sum(V3,na.rm = TRUE))%>% arrange(desc(as.numeric(total)))
-
-topLang_or[is.na(topLang_or$LanguageLong), "LanguageLong"]<-"Other"
-
-
-topLang<-as.vector(topLang_or[c(1:5), 'LanguageLong'])
-
-topLang_or$Percentage<-(topLang_or$total/sum(topLang_or$total))*100
-
-write.csv(topLang_or, "topLang.csv")
-
-languages$TopLanguages <- languages$LanguageLong
-
-languages$TopLanguages[!languages$TopLanguages%in%topLang$LanguageLong] <- "Other"
-
-theme_opts <- theme_bw() + theme(axis.title.x=element_text(size=24, colour="black", face="bold"),
-                                 axis.text.x=element_text(size=16, colour="black", face="bold"),
-                                 axis.title.y=element_text(size=24, colour="black", face="bold"),
-                                 axis.text.y=element_text(size=16, colour="black", face="bold"),
-                                 plot.title = element_text(size=24, colour="black", face="bold"),
-                                 strip.text=element_text(size=16, colour="black", face="bold"),
-                                 legend.title=element_text(size=24, colour="black", face="bold"),
-                                 legend.text=element_text(size=16, colour="black", face="bold"),
-                                 legend.position = "bottom")
-
-#Plot by Lag
-
-g<-ggplot(data=languages, aes(x=Date, y=total,fill=TopLanguages))+
-  geom_bar(position="stack", stat = 'identity')+
-  scale_fill_viridis_d("Language")+
-  scale_x_date(date_breaks  ="1 month", date_labels="%b")+
-  scale_y_continuous("Number of Tweets")+
-  theme_bw()+
-  theme_opts
- 
-
-
-png("Tweets by Language Bar plot.png", width=10, height=6, units="in", res=150)
-print(g)
-dev.off()
-
-
-p<-ggplotly(
-  p = g
-)
-p
-htmlwidgets::saveWidget(as_widget(p), "Tweets by Language Bar plot.html")
-
-#Plot all 
-
-languagesday<- languages %>%
-  group_by(Date) %>%
-  summarize(total=sum(total,na.rm = TRUE))
-  
-  
-g<-ggplot(data=languagesday, aes(x=Date, y=total))+
-  geom_line(size=1, color='blue', linetype = 1)+
-  scale_fill_viridis_d("Language")+
-  scale_x_date(date_breaks  ="1 month", date_labels="%b")+
-  scale_y_continuous("Number of Tweets")+
-  theme_bw()+
-  theme_opts
-
-
-
-png("Tweets per Day.png", width=10, height=6, units="in", res=150)
-print(g)
-dev.off()
-
-p<-ggplotly(
-  p = g
-)
-p
-htmlwidgets::saveWidget(as_widget(p), "Tweets per Day.html")
-
-g<-ggplot(data=languages[languages$TopLanguages!="Other",], aes(x=Date, y=total,group=TopLanguages, color=TopLanguages))+
-  geom_line(size=1)+
-  scale_fill_viridis_d("Language")+
-  scale_x_date(date_breaks  ="1 month", date_labels="%b")+
-  scale_y_continuous("Number of Tweets")+
-  theme_bw()+
-  theme_opts
-
-png("Tweets by Language Line plot.png", width=10, height=6, units="in", res=150)
-print(g)
-dev.off()
-
-p<-ggplotly(
-  p = g
-)
-p
-htmlwidgets::saveWidget(as_widget(p), "Tweets by Language Line plot.html")
 
 #MAP GEOCODED TWEETS
 geotweets <- Geo[!Geo$V2%in%c("Point", "", "(,)"),]
@@ -291,38 +157,6 @@ covid <- covid %>%
 
 
 
-
-geotweets <- aggregate(rep(1, nrow(geotweets)), by=list(geotweets$Lat, geotweets$Long),
-                       FUN=sum)
-
-coordinates(geotweets) <- c("Group.2", "Group.1")
-proj4string(geotweets) <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-names(geotweets@data) <- "Tweets"
-
-data("World")
-m <- tm_shape(World)+
-  tm_borders()+
-  tm_shape(geotweets)+
-  tm_bubbles(size="Tweets")+
-  tm_style("bw")+
-  tm_layout("Geocoded\nTweets", title.position = c("left", "bottom"))
-
-tmap_save(tm=m, filename="GeoTweets.png", width=8, height=6, units="in", dpi=150)
-
-
-
-
-
-
-
-
-
-if(length(table(SUMMARY_day_main$Date))*24==sum(table(SUMMARY_day_main$Date))){
-  print("ALL DAY WITH 24 HRS")
-}else{
-  tb<-  table(SUMMARY_day_main$Date)
-  tb[tb!=24]
-}
 
 
 
