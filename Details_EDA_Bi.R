@@ -61,6 +61,13 @@ reverse <- geotweets %>%
 reverse <- cbind(reverse,  geotweets["V3"])
 colnames(reverse)[7] <- "TweetID"
 
+
+# write the reverse out as a csv file
+subname<-substr(args[1],nchar(args[1])-32,nchar(args[1])-19)
+namea<-paste0(args[2], "/",subname,"Reverse.csv")
+write.csv(reverse, namea)
+
+
 # read the covid cases data from newyork times
 co <- fread("C:/Users/Biddy Bi/Desktop/datascience/co.csv",header = T, stringsAsFactors = FALSE)
 # change the form of date to the date form of newyork time table
