@@ -43,11 +43,13 @@ data <- as.data.frame(fread(args[1] ,header = T, stringsAsFactors = FALSE))
 name<-strsplit(args[1], split="_Summary_Details.csv")[[1]]
 date<-substr(name,nchar(name)-12,nchar(name))
 
-geo_jsons<-data[data$Geolocation_coordinate!="(,)" & !is.na(data$Geolocation_coordinate) & data$Geolocation_coordinate!="", "Geolocation_coordinate" ]
+geo_jsons<-data[data$Geolocation_coordinate!="(,)" & !is.na(data$Geolocation_coordinate) & data$Geolocation_coordinate!="", "Geolocation_coordinate"]
+twID<-data[data$Geolocation_coordinate!="(,)" & !is.na(data$Geolocation_coordinate) & data$Geolocation_coordinate!="", "Tweet_ID"]
 if(length(geo_jsons)>=1){
-  Geo2<-as.data.frame(matrix(0,length(geo_jsons),2))
-  Geo2[,1]<-rep(date, nrow(Geo2))
+  Geo2<-as.data.frame(matrix(0,length(geo_jsons),3))
+  Geo2[, 1]<-rep(date, nrow(Geo2))
   Geo2[, 2]<-geo_jsons
+  Geo2[, 3]<-twID
   Geo<-Geo2
 }
 
