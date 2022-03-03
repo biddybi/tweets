@@ -75,8 +75,8 @@ reverse <- geotweets %>%
 
 
 subname<-substr(args[1],nchar(args[1])-32,nchar(args[1])-19)
-name<-paste0(args[2], "/",subname,"Reverse.csv")
-write.csv(reverse, name)
+namea<-paste0(args[2], "/",subname,"Reverse.csv")
+write.csv(reverse, namea)
 
 count <- reverse %>%
   summarise(count_county = n())
