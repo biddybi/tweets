@@ -22,6 +22,9 @@ install.packages("stringr")
 library(stringr) #str_detect
 install.packages("sjmisc")
 library(sjmisc)
+install.packages("bit64")
+library(tidygeocoder)
+library(dplyr, warn.conflicts = FALSE)
 #Anlaysis
 #library(tmap)  #Plot Map
 #library(maptools)
@@ -67,13 +70,14 @@ geotweets <- geotweets[(geotweets$Long <180)&
                          (geotweets$Long >-180)&
                          (geotweets$Lat < 90)&
                          (geotweets$Lat > -90),]
-library(tidygeocoder)
-library(dplyr, warn.conflicts = FALSE)
+
 reverse <- geotweets %>%
   reverse_geocode(lat = Lat, long = Long, method = 'osm',
                   address = address_found, full_results = TRUE)%>%
   select(address_found,town,suburb,county,state,country)%>%
   group_by(county,state,country)
+reverse <- cbind(reverse,  geotweets["V3"])
+colnames(reverse)[7] <- "TweetID"
 
 
 subname<-substr(args[1],nchar(args[1])-32,nchar(args[1])-19)
@@ -85,7 +89,7 @@ count <- reverse %>%
 
 #covid<-read.csv("https://raw.githubusercontent.com/biddybi/tweets/main/co.csv")
 co <- fread("C:/Users/bix/Downloads/co.csv",header = T, stringsAsFactors = FALSE)
-datetable <-substr(gsub("_","-",date),0,10)
+datetable <-substr(gsub("_","/",date),0,10)
 
 
 ###################
