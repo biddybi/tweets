@@ -1,51 +1,31 @@
-args = commandArgs(trailingOnly=TRUE) 
-args=c("C:/Users/bix/Downloads/2020_01_27_19_Summary_Details.csv",
-       "C:/Users/bix/Downloads")
 
 # pass the absolute path
+args = commandArgs(trailingOnly=TRUE) 
+args=c("C:/Users/Biddy Bi/Desktop/datascience/2020_01/2020_01_27_19_Summary_Details.csv",
+       "C:/Users/Biddy Bi/Desktop")
 
-install.packages("data.table")
+#Load all packages
 library(data.table)
-install.packages("tidytext")
 library(tidytext)
-install.packages("tidyr")
 library(tidyr)
-install.packages("dplyr")
 library(dplyr) 
-install.packages("doParallel")
 library(doParallel)
-install.packages("foreach")
 library(foreach)
-install.packages("stringi")
+library(foreach)
 library(stringi)   #stri_replace_all_regex
-install.packages("stringr")
 library(stringr) #str_detect
-install.packages("sjmisc")
 library(sjmisc)
 install.packages("bit64")
 library(tidygeocoder)
 library(dplyr, warn.conflicts = FALSE)
-#Anlaysis
-#library(tmap)  #Plot Map
-#library(maptools)
-#library(lubridate)  #dmy
-#library(rtweet)#lang recode langy
-#library(ggplot2)
 
-#READ FILES
-##########################################################################################################
-
-
-
+#READ Summary_Details FILES
 
 Geo<-as.data.frame(matrix(0,0,2))
-
-
-
 data <- as.data.frame(fread(args[1] ,header = T, stringsAsFactors = FALSE))
 name<-strsplit(args[1], split="_Summary_Details.csv")[[1]]
 date<-substr(name,nchar(name)-12,nchar(name))
-
+# Find all cells that has geolocation and its tweet ID
 geo_jsons<-data[data$Geolocation_coordinate!="(,)" & !is.na(data$Geolocation_coordinate) & data$Geolocation_coordinate!="", "Geolocation_coordinate"]
 twID<-data[data$Geolocation_coordinate!="(,)" & !is.na(data$Geolocation_coordinate) & data$Geolocation_coordinate!="", "Tweet_ID"]
 if(length(geo_jsons)>=1){
@@ -56,7 +36,7 @@ if(length(geo_jsons)>=1){
   Geo<-Geo2
 }
 
-#MAP GEOCODED TWEETS
+#Change the pattern of geolocation and sort it in dataframe
 geotweets <- Geo[!Geo$V2%in%c("Point", "", "(,)"),]
 
 geos <- str_remove(geotweets$V2, fixed("("))
@@ -71,25 +51,29 @@ geotweets <- geotweets[(geotweets$Long <180)&
                          (geotweets$Lat < 90)&
                          (geotweets$Lat > -90),]
 
+# Use reverse_geo to get the county name of the location according to lat and longtitude
 reverse <- geotweets %>%
   reverse_geocode(lat = Lat, long = Long, method = 'osm',
                   address = address_found, full_results = TRUE)%>%
   select(address_found,town,suburb,county,state,country)%>%
   group_by(county,state,country)
+# Add tweet ID into the reverse table with the county information
 reverse <- cbind(reverse,  geotweets["V3"])
 colnames(reverse)[7] <- "TweetID"
 
+# read the covid cases data from newyork times
+co <- fread("C:/Users/Biddy Bi/Desktop/datascience/co.csv",header = T, stringsAsFactors = FALSE)
+# change the form of date to the date form of newyork time table
+dateslash <-substr(gsub("_","-",date),0,10)
+# Find all the date in nytime data that correspond to this summary detail file date
+subcovid <- filter(co,co$date==dateslash)
 
-subname<-substr(args[1],nchar(args[1])-32,nchar(args[1])-19)
-namea<-paste0(args[2], "/",subname,"Reverse.csv")
-write.csv(reverse, namea)
-
+# Count # of times tweets from same county add two columns of cases and deaths
 count <- reverse %>%
-  summarise(count_county = n())
+  summarise(count_county = n()) %>%
+  mutate(cases ="NA") %>%
+  mutate(deaths ="NA")
 
-#covid<-read.csv("https://raw.githubusercontent.com/biddybi/tweets/main/co.csv")
-co <- fread("C:/Users/bix/Downloads/co.csv",header = T, stringsAsFactors = FALSE)
-datetable <-substr(gsub("_","/",date),0,10)
-
-
-###################
+# Add the value of cases and deaths from nytimes to the count table of same county
+count$cases[grepl(subcovid$county, count$county, fixed=TRUE)] <- co$cases
+count$deaths[grepl(subcovid$county, count$county, fixed=TRUE)] <- co$deaths
